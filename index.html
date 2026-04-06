@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPath | AI Trip Planner</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #ee4343;
+            --secondary: #099a21;
+            --accent: #4cc9f0;
+            --bg: #f8f9fa;
+            --text: #3d422b;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        header p { opacity: 0.9; }
+
+        /* Input Form Styles */
+        .planner-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-top: -60px;
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        .btn-plan {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .btn-plan:hover { background: var(--secondary); transform: translateY(-2px); }
+
+        /* Results Sections */
+        .results-container {
+            display: none; /* Hidden until search */
+            margin-top: 30px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Specific Component Styles */
+        .weather-box {
+            text-align: center;
+            background: linear-gradient(to bottom, #4cc9f0, #4361ee);
+            color: white;
+        }
+        .weather-temp { font-size: 3rem; font-weight: bold; }
+
+        .transport-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #eee;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .price-tag {
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        .places-list { list-style: none; }
+        .places-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f9f9f9;
+        }
+        .places-list li i { color: #e63946; margin-right: 10px; }
+
+        .budget-total {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-top: 15px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .tips-list { font-size: 0.9rem; color: #555; }
+        .tips-list li { margin-bottom: 10px; }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .grid-inputs { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-route"></i> SmartPath</h1>
+            <p>Your Intelligent Travel Companion</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Input Section -->
+        <div class="planner-card">
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label>Starting City</label>
+                    <input type="text" id="sourceCity" placeholder="e.g. New York">
+                </div>
+                <div class="input-group">
+                    <label>Destination City</label>
+                    <input type="text" id="destCity" placeholder="e.g. Paris">
+                </div>
+                <div class="input-group">
+                    <label>Duration (Days)</label>
+                    <input type="number" id="tripDays" value="3" min="1" max="30">
+                </div>
+                <div class="input-group">
+                    <label>Budget Level</label>
+                    <select id="budgetLevel">
+                        <option value="1">Economy</option>
+                        <option value="1.8">Standard</option>
+                        <option value="3.5">Luxury</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-plan" onclick="generatePlan()">Plan My Trip <i class="fas fa-magic"></i></button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="results-container">
+            <h2 id="planTitle" style="margin-bottom: 20px; text-align: center;"></h2>
+            
+            <div class="dashboard-grid">
+                <!-- Weather Card -->
+                <div class="card weather-box">
+                    <h3><i class="fas fa-cloud-sun" style="color: white;"></i> Weather</h3>
+                    <div id="weatherContent">
+                        <p>Destination Climate</p>
+                        <div class="weather-temp">22°C</div>
+                        <p id="weatherDesc">Sunny and Pleasant</p>
+                    </div>
+                </div>
+
+                <!-- Transport Card -->
+                <div class="card">
+                    <h3><i class="fas fa-plane"></i> Transport Options</h3>
+                    <div id="transportContent">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <!-- Places Card -->
+                <div class="card">
+                    <h3><i class="fas fa-map-marker-alt"></i> Top Places to Visit</h3>
+                    <ul class="places-list" id="placesContent">
+                        <!-- Filled by JS -->
+                    </ul>
+                </div>
+
+                <!-- Budget Card -->
+                <div class="card">
+                    <h3><i class="fas fa-wallet"></i> Estimated Budget</h3>
+                    <div id="budgetContent">
+                        <!-- Filled by JS -->
+                    </div>
+                    <div class="budget-total" id="totalCost"></div>
+                </div>
+
+                <!-- Tips Card -->
+                <div class="card">
+                    <h3><i class="fas fa-lightbulb"></i> Travel Tips</h3>
+                    <ul class="tips-list" id="tipsContent">
+                        <!-- Filled by JS -->
+                    </ul>
+                </div>
+
+                <!-- Packing Card -->
+                <div class="card">
+                    <h3><i class="fas fa-briefcase"></i> Quick Packing List</h3>
+                    <ul class="tips-list" id="packingContent">
+                        <li>Universal Power Adapter</li>
+                        <li>Walking Shoes</li>
+                        <li>Personal Identification</li>
+                        <li>Small First-Aid Kit</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2023 SmartPath Trip Planner. All rights reserved. <br>
+        Built with HTML, CSS, and Vanilla JavaScript.
+    </footer>
+
+    <script>
+        /**
+         * MOCK DATA DATABASE
+         * In a real app, this would come from an API like Google Places or TripAdvisor.
+         * I've created a generator that provides specific data for major cities 
+         * and randomized realistic data for any other city.
+         */
+        const cityData = {
+            "paris": {
+                places: ["Eiffel Tower", "Louvre Museum", "Notre-Dame Cathedral", "Montmartre"],
+                tips: ["Learn basic French greetings", "Book museum tickets in advance", "Use the Metro to save money"],
+                temp: 18,
+                weather: "Partly Cloudy"
+            },
+            "london": {
+                places: ["Big Ben", "London Eye", "British Museum", "Tower Bridge"],
+                tips: ["Carry an umbrella always", "Get an Oyster card for transport", "Visit free museums"],
+                temp: 15,
+                weather: "Drizzle"
+            },
+            "tokyo": {
+                places: ["Shibuya Crossing", "Senso-ji Temple", "Tokyo Tower", "Akihabara"],
+                tips: ["Carry cash (many places don't take cards)", "Don't tip at restaurants", "Get a JR Pass"],
+                temp: 24,
+                weather: "Sunny"
+            },
+            "new york": {
+                places: ["Times Square", "Central Park", "Statue of Liberty", "Empire State Building"],
+                tips: ["Wear comfortable shoes", "Use the Subway", "Check out Broadway rush tickets"],
+                temp: 22,
+                weather: "Clear Sky"
+            }
+        };
+
+        function generatePlan() {
+            // Get user inputs
+            const source = document.getElementById('sourceCity').value;
+            const dest = document.getElementById('destCity').value;
+            const days = parseInt(document.getElementById('tripDays').value);
+            const budgetMultiplier = parseFloat(document.getElementById('budgetLevel').value);
+
+            // Simple Validation
+            if (!source || !dest) {
+                alert("Please enter both source and destination cities!");
+                return;
+            }
+
+            // Show Results Container
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('planTitle').innerText = `Trip from ${source} to ${dest}`;
+
+            // Process Destination Data
+            const destLower = dest.toLowerCase();
+            let data = cityData[destLower];
+
+            // Fallback for cities not in our "database"
+            if (!data) {
+                data = {
+                    places: [`${dest} City Center`, `${dest} Local Market`, "Historical Landmark", "Main Public Park"],
+                    tips: ["Ask locals for food recommendations", "Keep a copy of your passport", "Check local transport apps"],
+                    temp: Math.floor(Math.random() * (30 - 15) + 15),
+                    weather: "Clear Sky"
+                };
+            }
+
+            // 1. Update Weather
+            document.querySelector('.weather-temp').innerText = `${data.temp}°C`;
+            document.getElementById('weatherDesc').innerText = data.weather;
+
+            // 2. Update Transport
+            const baseTransportPrice = Math.floor(Math.random() * (500 - 100) + 100);
+            const transportHTML = `
+                <div class="transport-option">
+                    <span><i class="fas fa-plane"></i> Flight</span>
+                    <span class="price-tag">$${Math.floor(baseTransportPrice * 1.5)}</span>
+                </div>
+                <div class="transport-option">
+                    <span><i class="fas fa-train"></i> Train</span>
+                    <span class="price-tag">$${Math.floor(baseTransportPrice * 0.6)}</span>
+                </div>
+                <div class="transport-option">
+                    <span><i class="fas fa-bus"></i> Bus</span>
+                    <span class="price-tag">$${Math.floor(baseTransportPrice * 0.3)}</span>
+                </div>
+            `;
+            document.getElementById('transportContent').innerHTML = transportHTML;
+
+            // 3. Update Places
+            const placesHTML = data.places.map(place => `<li><i class="fas fa-check-circle"></i> ${place}</li>`).join('');
+            document.getElementById('placesContent').innerHTML = placesHTML;
+
+            // 4. Update Tips
+            const tipsHTML = data.tips.map(tip => `<li><i class="fas fa-lightbulb"></i> ${tip}</li>`).join('');
+            document.getElementById('tipsContent').innerHTML = tipsHTML;
+
+            // 5. Calculate Budget
+            const dailyFood = 40 * budgetMultiplier;
+            const dailyStay = 80 * budgetMultiplier;
+            const totalDaily = (dailyFood + dailyStay) * days;
+            const transportCost = baseTransportPrice;
+            const grandTotal = totalDaily + transportCost;
+
+            const budgetHTML = `
+                <div class="transport-option"><span>Daily Meals:</span> <span>$${dailyFood.toFixed(0)}</span></div>
+                <div class="transport-option"><span>Daily Stay:</span> <span>$${dailyStay.toFixed(0)}</span></div>
+                <div class="transport-option"><span>Transport:</span> <span>$${transportCost}</span></div>
+            `;
+            document.getElementById('budgetContent').innerHTML = budgetHTML;
+            document.getElementById('totalCost').innerText = `Est. Total: $${grandTotal.toFixed(0)}`;
+
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
